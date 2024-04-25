@@ -1,0 +1,58 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool: Default
+  #vmImage: ubuntu-latest
+
+variables:
+  provider: 'azurerm'
+  command: 'init'
+  backendServiceArm: 'azureado'
+  backendAzureRmResourceGroupName: 'terraform-storage'
+  backendAzureRmStorageAccountName: 'terraformstategop'
+  backendAzureRmContainerName: 'tfstatefiles'
+  backendAzureRmKey: 'adotfstate'
+
+stages:
+  - stage: tfdestroy
+    jobs:
+      
+      - job: destroyapproval
+        
+        condition: and (succeeded(),ne(variables['Build.Reason'],'PullRequest'))
+        pool: server
+        displayName: wait for approval before destroy
+        steps:
+          
+          - task: ManualValidation@0
+            timeoutInMinutes: 5
+            inputs:
+              instructions: 'please approve the job'
+              emailRecipients: 'gopal1409@gmail.com'
+              onTimeout: 'reject'
+
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: 'latest'
+
+          - task: TerraformTaskV4@4
+            displayName: init
+            inputs:
+              provider: 'azurerm'
+              command: 'init'
+              backendServiceArm: 'kenservicep-servcon'
+              backendAzureRmResourceGroupName: 'terraform-state'
+              backendAzureRmStorageAccountName: 'terraformtfstate12'
+              backendAzureRmContainerName: 'tfstatefiles'
+              backendAzureRmKey: 'initkey'
+          - task: TerraformTaskV4@4
+            displayName: "destroy"
+            inputs:
+              provider: 'azurerm'
+              command: 'destroy'
+              environmentServiceNameAzureRM: 'kenservicep-servcon'
